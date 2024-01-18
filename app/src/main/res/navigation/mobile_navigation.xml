@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_orders">
+
+
+    <fragment
+        android:id="@+id/nav_deliveries"
+        android:name="com.robles.cesar.pedidosapp.fragments.DeliveryListFragment"
+        android:label="Repartidores"
+        tools:layout="@layout/fragment_delivery_list" />
+    <fragment
+        android:id="@+id/nav_orders"
+        android:name="com.robles.cesar.pedidosapp.fragments.ListOrdersFragment"
+        android:label="Pedidos"
+        tools:layout="@layout/fragment_list_orders" />
+    <fragment
+        android:id="@+id/nav_my_orders"
+        android:name="com.robles.cesar.pedidosapp.fragments.DeliveryOrders"
+        android:label="Mis pedidos asignados"
+        tools:layout="@layout/fragment_delivery_orders" />
+</navigation>

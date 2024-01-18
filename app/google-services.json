@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "272256169087",
+    "project_id": "repartosapp-8cd86",
+    "storage_bucket": "repartosapp-8cd86.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272256169087:android:08d5284ea9206b7a8b7b4a",
+        "android_client_info": {
+          "package_name": "com.robles.cesar.pedidosapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjD17X4ic64qTSfbhWGPyXq3a9V-lEXbQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
