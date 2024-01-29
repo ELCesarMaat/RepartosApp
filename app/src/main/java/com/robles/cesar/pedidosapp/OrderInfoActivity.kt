@@ -6,11 +6,15 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.robles.cesar.pedidosapp.databinding.ActivityOrderInfoBinding
 import com.robles.cesar.pedidosapp.models.OrderStatus
 import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class OrderInfoActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
@@ -33,14 +37,14 @@ class OrderInfoActivity : AppCompatActivity() {
 
         b.tvLocation.setOnClickListener {
             val url = b.tvLocation.text.toString()
-            if(url != NO_LOCATION){
+            if (url != NO_LOCATION) {
                 openMap(url)
             }
         }
 
         b.tvDeliveringLocation.setOnClickListener {
-        val url = b.tvDeliveringLocation.text.toString()
-            if(url != NO_LOCATION && (url.contains("//") || url.lowercase().contains("http")))
+            val url = b.tvDeliveringLocation.text.toString()
+            if (url != NO_LOCATION && (url.contains("//") || url.lowercase().contains("http")))
                 openMap(url)
         }
 
@@ -63,26 +67,38 @@ class OrderInfoActivity : AppCompatActivity() {
     }
 
     private fun updateOrderStatus(status: OrderStatus) {
-        val newData =  hashMapOf<String, Any>(
+        val newData = hashMapOf<String, Any>(
             "status" to status.code,
         )
-        if(status == OrderStatus.ENTREGADO)
+        if (status == OrderStatus.ENTREGADO)
             newData["delivered_date"] = FieldValue.serverTimestamp()
-        if(status == OrderStatus.EN_REPARTO)
+        if (status == OrderStatus.EN_REPARTO)
             newData["delivering_date"] = FieldValue.serverTimestamp()
-        if(status == OrderStatus.PENDIENTE)
-            newData["delivering_date"] =  FieldValue.delete()
+        if (status == OrderStatus.PENDIENTE)
+            newData["delivering_date"] = FieldValue.delete()
 
         db.collection("orders").document(orderId).update(newData).addOnCompleteListener {
-            if(it.isSuccessful){
-                if(status == OrderStatus.ENTREGADO)
+            if (it.isSuccessful) {
+                if (status == OrderStatus.ENTREGADO)
                     finish()
-                Toast.makeText(this@OrderInfoActivity, "¡Estado Actualizado con exito!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@OrderInfoActivity,
+                    "¡Estado Actualizado con exito!",
+                    Toast.LENGTH_SHORT
+                ).show()
                 getOrderInfo(orderId)
             }
         }
     }
 
+    fun formatDate(timestamp: Timestamp?): String {
+        timestamp ?: return "SIN FECHA"
+
+        val date = timestamp.toDate()
+        val format = SimpleDateFormat("EEEE, d MMMM yyyy hh:mm a", Locale("es", "ES"))
+        format.timeZone = TimeZone.getDefault()
+        return format.format(date)
+    }
 
 
     private fun getOrderInfo(orderId: String) {
@@ -94,7 +110,7 @@ class OrderInfoActivity : AppCompatActivity() {
                 b.tvOrderDetails.text = doc.getString("orderDetails")
                 b.tvCustomerPhone.text = doc.getString("customerPhone")
                 b.tvCustomerAddress.text = doc.getString("customerAddress")
-                b.tvDeliveringLocation.text = doc.getString("delivering_location")?: NO_LOCATION
+                b.tvDeliveringLocation.text = doc.getString("delivering_location") ?: NO_LOCATION
                 val status = try {
                     doc.getLong("status") ?: 1L
                 } catch (e: Exception) {
@@ -102,16 +118,16 @@ class OrderInfoActivity : AppCompatActivity() {
                 }
 
                 b.tvStatus.text = OrderStatus.fromInt(status).name
-                if(status != OrderStatus.ENTREGADO.code){
+                if (status != OrderStatus.ENTREGADO.code) {
                     b.btnPending.visibility = View.VISIBLE
                     b.btnDelivered.visibility = View.VISIBLE
                     b.btnInTransit.visibility = View.VISIBLE
                 }
 
-                b.tvDate.text = doc.getDate("date").toString()
+                b.tvDate.text = formatDate(doc.getTimestamp("date"))
                 b.tvLocation.text = doc.getString("location") ?: NO_LOCATION
-                b.tvDeliveredDate.text = doc.getDate("delivered_date")?.toString() ?: "SIN FECHA"
-                b.tvDeliveringDate.text = doc.getDate("delivering_date")?.toString() ?: "SIN FECHA"
+                b.tvDeliveredDate.text = formatDate(doc.getTimestamp("delivered_date"))
+                b.tvDeliveringDate.text = formatDate(doc.getTimestamp("delivering_date"))
             }
         }
     }

@@ -21,8 +21,8 @@ import java.lang.Exception
 
 class ListOrdersFragment : Fragment() {
     lateinit var b: FragmentListOrdersBinding
-    val db = FirebaseFirestore.getInstance()
-    val orderList = mutableListOf<Order>()
+    private val db = FirebaseFirestore.getInstance()
+    private val orderList = mutableListOf<Order>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -39,16 +39,19 @@ class ListOrdersFragment : Fragment() {
         b.recyclerListOrders.layoutManager = manager
         b.recyclerListOrders.addItemDecoration(decorator)
 
-        b.txtSearchOrder.setOnQueryTextListener(object: SearchView.OnQueryTextListener{
+        b.txtSearchOrder.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(p0: String?): Boolean {
-                TODO("Not yet implemented")
+                return true
             }
 
             override fun onQueryTextChange(p0: String?): Boolean {
-                TODO("Not yet implemented")
+                return true
             }
-
         })
+
+        b.swipeLayout.setOnRefreshListener {
+            getOrders()
+        }
     }
 
     override fun onResume() {
@@ -58,14 +61,17 @@ class ListOrdersFragment : Fragment() {
 
     private fun getOrders() {
         orderList.clear()
-        b.recyclerListOrders.adapter = OrderAdapter(orderList){
+        b.recyclerListOrders.adapter = OrderAdapter(orderList) {
 
         }
-        db.collection("orders").get().addOnCompleteListener {
-            if (!it.isSuccessful) {
-                Toast.makeText(context, "Error ${it.exception?.message}", Toast.LENGTH_SHORT).show()
-            } else {
-                for (doc in it.result.documents) {
+        db.collection("orders").addSnapshotListener { snapshots, error ->
+            if (error != null) {
+                return@addSnapshotListener
+            }
+            if (snapshots != null && !snapshots.isEmpty) {
+                orderList.clear()
+                for (doc in snapshots.documents) {
+                    // Convertir el documento de Firestore en una instancia de Order
                     val orderId = doc.id
                     val customerName = doc.get("customerName").toString()
                     val customerAddress = doc.get("customerAddress").toString()
@@ -88,11 +94,16 @@ class ListOrdersFragment : Fragment() {
                     )
                     orderList.add(order)
                 }
-                orderList.sortBy { order -> order.status }
+                orderList.sortBy { it.status }
                 b.recyclerListOrders.adapter?.notifyDataSetChanged()
+            } else {
+                Toast.makeText(context, "Datos de órdenes no encontrados", Toast.LENGTH_SHORT)
+                    .show()
             }
-
         }
+        b.swipeLayout.isRefreshing = false
+
+
     }
 
 }

@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Patterns
+import android.view.View
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import com.google.firebase.auth.FirebaseAuth
@@ -14,7 +15,6 @@ import com.robles.cesar.pedidosapp.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var b: ActivityMainBinding
-    private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,8 +24,11 @@ class MainActivity : AppCompatActivity() {
         b.btnLogin.setOnClickListener {
             val email = b.txtEmail.editText?.text.toString()
             val password = b.txtPassword.editText?.text.toString()
-            if (validateFields())
+            if (validateFields()) {
+                b.txtError.visibility = View.GONE
+                b.btnLogin.isEnabled = false
                 login(email, password)
+            }
         }
         invalidateFields()
     }
@@ -47,7 +50,7 @@ class MainActivity : AppCompatActivity() {
             b.txtPassword.error = "Ingrese su contraseña"
             res = false
         }
-        return res;
+        return res
     }
 
     fun login(email: String, password: String) {
@@ -57,6 +60,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "User ID: $userId", Toast.LENGTH_SHORT).show()
                 showMainScreen()
             } else {
+                b.btnLogin.isEnabled = true
                 handleLoginError(it.exception)
             }
 
@@ -64,30 +68,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun handleLoginError(exception: Exception?) {
+        var error_message = ""
         exception?.let {
-            when (it) {
+            error_message = when (it) {
                 is FirebaseAuthInvalidUserException -> {
-                    // El usuario no existe o fue deshabilitado
-                    Toast.makeText(this@MainActivity, "Usuario no encontrado", Toast.LENGTH_SHORT)
-                        .show()
+                    "Usuario no encontrado"
                 }
 
                 is FirebaseAuthInvalidCredentialsException -> {
                     // La contraseña es incorrecta o el formato del correo electrónico es inválido
-                    Toast.makeText(this@MainActivity, "Credenciales inválidas", Toast.LENGTH_SHORT)
-                        .show()
+                    "Credenciales inválidas"
                 }
 
                 else -> {
-                    // Otros errores
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Error en el inicio de sesión: ${it.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    it.message.toString()
                 }
             }
         }
+        b.txtError.text = error_message
+        b.txtError.visibility = View.VISIBLE
     }
 
     private fun showMainScreen() {

@@ -28,7 +28,7 @@ class OrderAdapter(private var orderList: List<Order>, private val onCLickListen
         val orderListDiff = OrderDiffUtil(orderList, newList)
         val result = DiffUtil.calculateDiff(orderListDiff)
         orderList = newList
-        result.dispatchUpdatesTo(this, )
+        result.dispatchUpdatesTo(this)
     }
 
 }

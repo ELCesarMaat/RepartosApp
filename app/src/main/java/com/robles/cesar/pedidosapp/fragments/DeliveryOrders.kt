@@ -23,14 +23,13 @@ class DeliveryOrders : Fragment() {
     private lateinit var b: FragmentDeliveryOrdersBinding
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private val orderList = arrayListOf<Order>()
+    private var orderList = arrayListOf<Order>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         b = FragmentDeliveryOrdersBinding.inflate(layoutInflater)
-        // Inflate the layout for this fragment
         return b.root
     }
 
@@ -41,33 +40,28 @@ class DeliveryOrders : Fragment() {
         val decorator = DividerItemDecoration(context, manager.orientation)
         b.rvDeliveryOrders.layoutManager = manager
         b.rvDeliveryOrders.addItemDecoration(decorator)
-        b.rvDeliveryOrders.adapter = OrderAdapter(orderList){
+        b.rvDeliveryOrders.adapter = OrderAdapter(orderList) {
             onItemOrderClick(it)
+        }
+        b.swipeLayout.setOnRefreshListener {
+            b.swipeLayout.isRefreshing = false
         }
     }
 
-    private fun onItemOrderClick(order: Order) {
-         showOrderInfo(order.orderId)
-    }
 
-    private fun showOrderInfo(orderId: String) {
-        val i = Intent(context, OrderInfoActivity::class.java)
-        i.putExtra("order_id", orderId)
-        startActivity(i)
-    }
+    private fun listenNewOrders() {
+        val userOrdersRef =
+            db.collection("orders").whereEqualTo("deliveryId", auth.currentUser?.uid)
 
-    override fun onResume() {
-        super.onResume()
-        getDeliveryOrders()
-    }
+        userOrdersRef.addSnapshotListener { snapshots, e ->
+            if (e != null) {
+                Toast.makeText(context, "Escucha fallida: ${e.message}", Toast.LENGTH_SHORT).show()
+                return@addSnapshotListener
+            }
 
-    private fun getDeliveryOrders() {
-        orderList.clear()
-        db.collection("orders").whereEqualTo("deliveryId", auth.currentUser?.uid).get().addOnCompleteListener {
-            if (!it.isSuccessful) {
-                Toast.makeText(context, "Error ${it.exception?.message}", Toast.LENGTH_SHORT).show()
-            } else {
-                for (doc in it.result.documents) {
+            if (snapshots != null && !snapshots.isEmpty) {
+                orderList.clear()
+                for (doc in snapshots.documents) {
                     val orderId = doc.id
                     val customerName = doc.get("customerName").toString()
                     val customerAddress = doc.get("customerAddress").toString()
@@ -90,9 +84,32 @@ class DeliveryOrders : Fragment() {
                     )
                     orderList.add(order)
                 }
-                orderList.sortBy { x -> x.status }
+                orderList.sortBy { it.status }
                 b.rvDeliveryOrders.adapter?.notifyDataSetChanged()
+            } else {
+                Toast.makeText(context, "Datos de órdenes no encontrados", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
+    }
+
+
+    private fun onItemOrderClick(order: Order) {
+        showOrderInfo(order.orderId)
+    }
+
+    private fun showOrderInfo(orderId: String) {
+        val i = Intent(context, OrderInfoActivity::class.java)
+        i.putExtra("order_id", orderId)
+        startActivity(i)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        listenNewOrders()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
     }
 }

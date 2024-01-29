@@ -3,7 +3,9 @@ package com.robles.cesar.pedidosapp
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
+import android.view.MenuItem
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.navigation.NavigationView
@@ -60,6 +62,23 @@ class MenuActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when(item.itemId){
+            R.id.action_menu_logout -> {
+                auth.signOut()
+                val i = Intent(this, MainActivity::class.java)
+                startActivity(i)
+                finish()
+                true
+            }
+
+            else -> {
+                super.onOptionsItemSelected(item)
+            }
+
+        }
+    }
+
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_menu)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
@@ -68,14 +87,18 @@ class MenuActivity : AppCompatActivity() {
     private fun getCurrentUser() {
         val userId = auth.currentUser?.uid ?: ""
         db.collection("deliveries").document(userId).get().addOnCompleteListener {
-            if(it.isSuccessful) {
+            if (it.isSuccessful) {
                 Toast.makeText(this, it.result.get("name").toString(), Toast.LENGTH_SHORT).show()
                 val doc = it.result
-                if(doc.getBoolean("admin") == true){
+                if (doc.getBoolean("admin") == true) {
                     showNavItem(R.id.nav_deliveries, true)
                     showNavItem(R.id.nav_my_orders, false)
                     binding.appBarMenu.fab.visibility = View.VISIBLE
                 }
+                binding.navView.getHeaderView(0).findViewById<TextView>(R.id.txt_name_header)
+                    .text = doc.getString("name")
+                binding.navView.getHeaderView(0).findViewById<TextView>(R.id.txt_email_header)
+                    .text = doc.getString("email")
             }
         }
     }

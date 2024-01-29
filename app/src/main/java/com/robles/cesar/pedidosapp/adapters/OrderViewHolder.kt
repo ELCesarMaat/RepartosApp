@@ -18,14 +18,16 @@ class OrderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         b.txtOrderId.text = order.orderId
 
         when (order.status) {
-            OrderStatus.ENTREGADO -> itemView.backgroundTintList =
-                ColorStateList.valueOf(Color.parseColor("#FFCDFFC4"))
+            OrderStatus.ENTREGADO -> {
+                itemView.backgroundTintList =
+                    ColorStateList.valueOf(Color.parseColor("#FFC8E6C9"))
+            }
 
             OrderStatus.EN_REPARTO -> itemView.backgroundTintList =
-                ColorStateList.valueOf(Color.parseColor("#FFFEFFC8"))
+                ColorStateList.valueOf(Color.parseColor("#FFBBDEFB"))
 
             OrderStatus.PENDIENTE -> itemView.backgroundTintList =
-                ColorStateList.valueOf(Color.parseColor("#FFFFEEEE"))
+                ColorStateList.valueOf(Color.parseColor("#FFFFF9C4"))
         }
 
         itemView.setOnClickListener {
